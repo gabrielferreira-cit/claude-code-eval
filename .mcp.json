@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "taskdb": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "mcp-server/src/index.ts"],
+      "env": {
+        "DB_PATH": "./services/api/data/tasks.db"
+      }
+    }
+  }
+}
