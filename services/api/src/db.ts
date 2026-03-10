@@ -23,6 +23,8 @@ export function createDb(dbPath?: string): Database.Database {
       description TEXT,
       status      TEXT    NOT NULL DEFAULT 'pending'
                           CHECK(status IN ('pending', 'processing', 'done', 'failed')),
+      priority    TEXT    NOT NULL DEFAULT 'medium'
+                          CHECK(priority IN ('low', 'medium', 'high')),
       created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
@@ -33,6 +35,13 @@ export function createDb(dbPath?: string): Database.Database {
       UPDATE tasks SET updated_at = datetime('now') WHERE id = NEW.id;
     END;
   `);
+
+  const cols = db.pragma('table_info(tasks)') as { name: string }[];
+  if (!cols.some((c) => c.name === 'priority')) {
+    db.exec(
+      "ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high'))"
+    );
+  }
 
   return db;
 }

@@ -1,8 +1,8 @@
 """Entry point: poll for pending tasks every 5 seconds."""
 
-import time
 import signal
 import sys
+import time
 
 from .processor import run_once
 

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getDb } from '../db.js';
-import type { Task, CreateTaskBody, UpdateTaskBody } from '@claude-eval/shared';
+import { TASK_PRIORITIES } from '@claude-eval/shared';
+import type { Task, TaskPriority, CreateTaskBody, UpdateTaskBody } from '@claude-eval/shared';
 
 export const tasksRouter = Router();
 
@@ -13,18 +14,42 @@ tasksRouter.post('/', (req: Request, res: Response) => {
     return;
   }
 
+  if (body.priority !== undefined) {
+    if (!TASK_PRIORITIES.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
+      return;
+    }
+  }
+
   const db = getDb();
   const stmt = db.prepare(
-    'INSERT INTO tasks (title, description) VALUES (?, ?) RETURNING *'
+    'INSERT INTO tasks (title, description, priority) VALUES (?, ?, ?) RETURNING *'
   );
-  const task = stmt.get(body.title.trim(), body.description ?? null) as Task;
+  const task = stmt.get(
+    body.title.trim(),
+    body.description ?? null,
+    body.priority ?? 'medium'
+  ) as Task;
   res.status(201).json({ data: task });
 });
 
 // GET /tasks — list all tasks
-tasksRouter.get('/', (_req: Request, res: Response) => {
+tasksRouter.get('/', (req: Request, res: Response) => {
+  const { priority } = req.query;
+  if (priority !== undefined) {
+    if (!TASK_PRIORITIES.includes(priority as TaskPriority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
+      return;
+    }
+  }
+
+  const priorityFilter = priority as TaskPriority | undefined;
   const db = getDb();
-  const tasks = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all() as Task[];
+  const tasks = priorityFilter
+    ? (db
+        .prepare('SELECT * FROM tasks WHERE priority = ? ORDER BY created_at DESC')
+        .all(priorityFilter) as Task[])
+    : (db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all() as Task[]);
   res.json({ data: tasks });
 });
 
@@ -85,6 +110,14 @@ tasksRouter.patch('/:id', (req: Request, res: Response) => {
     }
     fields.push('status = ?');
     values.push(body.status);
+  }
+  if (body.priority !== undefined) {
+    if (!TASK_PRIORITIES.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
+      return;
+    }
+    fields.push('priority = ?');
+    values.push(body.priority);
   }
 
   if (fields.length === 0) {

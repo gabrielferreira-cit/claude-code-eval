@@ -1,7 +1,8 @@
 """Tests for worker/processor.py"""
 
 import sqlite3
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -53,5 +54,34 @@ def test_process_task_transitions_to_done(conn: sqlite3.Connection) -> None:
         mock_notify.assert_called_once()
 
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT status FROM tasks WHERE id = ?", (task["id"],)).fetchone()
+    row = conn.execute(
+        "SELECT status FROM tasks WHERE id = ?", (task["id"],)
+    ).fetchone()
     assert row["status"] == "done"
+
+
+def test_run_once_returns_zero_when_db_missing() -> None:
+    missing = Path("/tmp/nonexistent_tasks.db")
+    result = run_once(db_path=missing)
+    assert result == 0
+
+
+def test_run_once_processes_pending_tasks(conn: sqlite3.Connection) -> None:
+    conn.execute("INSERT INTO tasks (title, status) VALUES ('Pending task', 'pending')")
+    conn.execute("INSERT INTO tasks (title, status) VALUES ('Done task', 'done')")
+    conn.commit()
+
+    mock_conn = MagicMock()
+    mock_conn.__enter__ = MagicMock(return_value=conn)
+    mock_conn.__exit__ = MagicMock(return_value=False)
+
+    fake_path = MagicMock(spec=Path)
+    fake_path.exists.return_value = True
+
+    with (
+        patch("worker.processor.sqlite3.connect", return_value=mock_conn),
+        patch("worker.processor.send_notification"),
+    ):
+        result = run_once(db_path=fake_path)
+
+    assert result == 1
