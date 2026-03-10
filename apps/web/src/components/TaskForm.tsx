@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { TASK_PRIORITIES } from '@claude-eval/shared';
 import type { CreateTaskBody, TaskPriority } from '@claude-eval/shared';
 
 interface Props {
@@ -49,9 +50,11 @@ export function TaskForm({ onSubmit }: Props) {
         onChange={(e) => setPriority(e.target.value as TaskPriority)}
         style={{ padding: '6px 10px', borderRadius: 4, border: '1px solid #ccc' }}
       >
-        <option value="low">low</option>
-        <option value="medium">medium</option>
-        <option value="high">high</option>
+        {TASK_PRIORITIES.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
       </select>
       <button type="submit" disabled={busy} style={{ padding: '6px 16px' }}>
         {busy ? '...' : 'Add'}

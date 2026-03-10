@@ -2,6 +2,8 @@ export type TaskStatus = 'pending' | 'processing' | 'done' | 'failed';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
+export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
+
 export interface Task {
   id: number;
   title: string;

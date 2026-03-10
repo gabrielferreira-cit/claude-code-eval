@@ -61,6 +61,12 @@ describe('POST /tasks', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBeDefined();
   });
+
+  it('returns 400 for invalid priority value', async () => {
+    const res = await request(app).post('/tasks').send({ title: 'Task', priority: 'critical' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
 });
 
 // ─── GET /tasks ───────────────────────────────────────────────────────────────

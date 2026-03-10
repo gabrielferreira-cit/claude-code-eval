@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { getDb } from '../db.js';
-import type { Task, CreateTaskBody, UpdateTaskBody } from '@claude-eval/shared';
+import { TASK_PRIORITIES } from '@claude-eval/shared';
+import type { Task, TaskPriority, CreateTaskBody, UpdateTaskBody } from '@claude-eval/shared';
 
 export const tasksRouter = Router();
 
@@ -14,9 +15,8 @@ tasksRouter.post('/', (req: Request, res: Response) => {
   }
 
   if (body.priority !== undefined) {
-    const valid = ['low', 'medium', 'high'];
-    if (!valid.includes(body.priority)) {
-      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+    if (!TASK_PRIORITIES.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
       return;
     }
   }
@@ -37,18 +37,18 @@ tasksRouter.post('/', (req: Request, res: Response) => {
 tasksRouter.get('/', (req: Request, res: Response) => {
   const { priority } = req.query;
   if (priority !== undefined) {
-    const valid = ['low', 'medium', 'high'];
-    if (!valid.includes(priority as string)) {
-      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+    if (!TASK_PRIORITIES.includes(priority as TaskPriority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
       return;
     }
   }
 
+  const priorityFilter = priority as TaskPriority | undefined;
   const db = getDb();
-  const tasks = priority
+  const tasks = priorityFilter
     ? (db
         .prepare('SELECT * FROM tasks WHERE priority = ? ORDER BY created_at DESC')
-        .all(priority as string) as Task[])
+        .all(priorityFilter) as Task[])
     : (db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all() as Task[]);
   res.json({ data: tasks });
 });
@@ -112,9 +112,8 @@ tasksRouter.patch('/:id', (req: Request, res: Response) => {
     values.push(body.status);
   }
   if (body.priority !== undefined) {
-    const valid = ['low', 'medium', 'high'];
-    if (!valid.includes(body.priority)) {
-      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+    if (!TASK_PRIORITIES.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${TASK_PRIORITIES.join(', ')}` });
       return;
     }
     fields.push('priority = ?');
