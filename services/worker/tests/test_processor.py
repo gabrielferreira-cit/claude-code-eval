@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from worker.processor import get_pending_tasks, process_task, run_once
+from worker.processor import get_pending_tasks, process_task
 
 
 @pytest.fixture
@@ -53,5 +53,7 @@ def test_process_task_transitions_to_done(conn: sqlite3.Connection) -> None:
         mock_notify.assert_called_once()
 
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT status FROM tasks WHERE id = ?", (task["id"],)).fetchone()
+    row = conn.execute(
+        "SELECT status FROM tasks WHERE id = ?", (task["id"],)
+    ).fetchone()
     assert row["status"] == "done"

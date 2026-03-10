@@ -1,9 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,16 +11,11 @@ import { explainQuery } from './tools/explainQuery.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const dbPath =
-  process.env.DB_PATH ??
-  path.join(__dirname, '../../services/api/data/tasks.db');
+const dbPath = process.env.DB_PATH ?? path.join(__dirname, '../../services/api/data/tasks.db');
 
 const db = new Database(dbPath, { readonly: true });
 
-const server = new Server(
-  { name: 'taskdb', version: '0.0.1' },
-  { capabilities: { tools: {} } }
-);
+const server = new Server({ name: 'taskdb', version: '0.0.1' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
@@ -63,8 +55,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'explain_query',
-      description:
-        'Run EXPLAIN QUERY PLAN on a SELECT statement to understand query performance.',
+      description: 'Run EXPLAIN QUERY PLAN on a SELECT statement to understand query performance.',
       inputSchema: {
         type: 'object',
         properties: {

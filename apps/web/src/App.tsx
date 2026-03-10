@@ -39,9 +39,7 @@ export function App() {
   return (
     <div style={{ maxWidth: 720, margin: '40px auto', padding: '0 16px' }}>
       <h1 style={{ marginBottom: 24, fontSize: 24 }}>Task Manager</h1>
-      {error && (
-        <p style={{ color: '#d9534f', marginBottom: 12 }}>Error: {error}</p>
-      )}
+      {error && <p style={{ color: '#d9534f', marginBottom: 12 }}>Error: {error}</p>}
       <TaskForm onSubmit={handleCreate} />
       <TaskList tasks={tasks} onDelete={handleDelete} onStatusChange={handleStatusChange} />
     </div>

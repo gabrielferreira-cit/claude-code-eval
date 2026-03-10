@@ -1,10 +1,16 @@
-import type { Task, TaskStatus } from '@claude-eval/shared';
+import type { Task, TaskStatus, TaskPriority } from '@claude-eval/shared';
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending: '#f0ad4e',
   processing: '#5bc0de',
   done: '#5cb85c',
   failed: '#d9534f',
+};
+
+const PRIORITY_COLORS: Record<TaskPriority, string> = {
+  low: '#5cb85c',
+  medium: '#f0ad4e',
+  high: '#d9534f',
 };
 
 interface Props {
@@ -43,6 +49,18 @@ export function TaskList({ tasks, onDelete, onStatusChange }: Props) {
             }}
           />
           <span style={{ flex: 1, fontWeight: 500 }}>{task.title}</span>
+          <span
+            style={{
+              padding: '2px 8px',
+              borderRadius: 10,
+              fontSize: 11,
+              fontWeight: 600,
+              background: PRIORITY_COLORS[task.priority],
+              color: '#fff',
+            }}
+          >
+            {task.priority}
+          </span>
           {task.description && (
             <span style={{ color: '#666', fontSize: 13 }}>{task.description}</span>
           )}

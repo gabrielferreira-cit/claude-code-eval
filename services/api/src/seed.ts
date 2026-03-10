@@ -8,9 +8,7 @@ if (existing.count > 0) {
   process.exit(0);
 }
 
-const insert = db.prepare(
-  'INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)'
-);
+const insert = db.prepare('INSERT INTO tasks (title, description, status) VALUES (?, ?, ?)');
 
 const tasks = [
   ['Set up CI pipeline', 'Configure GitHub Actions for build and test', 'done'],

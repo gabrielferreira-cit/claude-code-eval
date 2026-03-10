@@ -43,6 +43,24 @@ describe('POST /tasks', () => {
     });
     expect(res.body.data.id).toBeDefined();
   });
+
+  it('defaults priority to medium when omitted', async () => {
+    const res = await request(app).post('/tasks').send({ title: 'No priority' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.priority).toBe('medium');
+  });
+
+  it('stores and returns priority: high', async () => {
+    const res = await request(app).post('/tasks').send({ title: 'Urgent', priority: 'high' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.priority).toBe('high');
+  });
+
+  it('returns 400 for missing title', async () => {
+    const res = await request(app).post('/tasks').send({ description: 'no title' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
 });
 
 // ─── GET /tasks ───────────────────────────────────────────────────────────────
@@ -61,6 +79,22 @@ describe('GET /tasks', () => {
     const res = await request(app).get('/tasks');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(2);
+  });
+
+  it('filters tasks by ?priority=high', async () => {
+    testDb.prepare("INSERT INTO tasks (title, priority) VALUES ('Low task', 'low')").run();
+    testDb.prepare("INSERT INTO tasks (title, priority) VALUES ('High task', 'high')").run();
+
+    const res = await request(app).get('/tasks?priority=high');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].title).toBe('High task');
+  });
+
+  it('returns 400 for ?priority=invalid', async () => {
+    const res = await request(app).get('/tasks?priority=invalid');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
   });
 });
 
@@ -86,9 +120,7 @@ describe('PATCH /tasks/:id', () => {
       .prepare("INSERT INTO tasks (title) VALUES ('Old title')")
       .run();
 
-    const res = await request(app)
-      .patch(`/tasks/${lastInsertRowid}`)
-      .send({ title: 'New title' });
+    const res = await request(app).patch(`/tasks/${lastInsertRowid}`).send({ title: 'New title' });
 
     expect(res.status).toBe(200);
     expect(res.body.data.title).toBe('New title');
@@ -97,6 +129,34 @@ describe('PATCH /tasks/:id', () => {
   it('returns 404 when task does not exist', async () => {
     const res = await request(app).patch('/tasks/99999').send({ title: 'X' });
     expect(res.status).toBe(404);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('returns 400 for non-integer id', async () => {
+    const res = await request(app).patch('/tasks/abc').send({ title: 'X' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('can update priority to low', async () => {
+    const { lastInsertRowid } = testDb
+      .prepare("INSERT INTO tasks (title) VALUES ('Some task')")
+      .run();
+
+    const res = await request(app).patch(`/tasks/${lastInsertRowid}`).send({ priority: 'low' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.priority).toBe('low');
+  });
+
+  it('returns 400 for invalid priority value', async () => {
+    const { lastInsertRowid } = testDb
+      .prepare("INSERT INTO tasks (title) VALUES ('Some task')")
+      .run();
+
+    const res = await request(app).patch(`/tasks/${lastInsertRowid}`).send({ priority: 'urgent' });
+
+    expect(res.status).toBe(400);
     expect(res.body.error).toBeDefined();
   });
 });

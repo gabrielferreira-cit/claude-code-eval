@@ -5,14 +5,15 @@ from pathlib import Path
 
 from .utils import send_notification
 
-
 DEFAULT_DB_PATH = Path(__file__).parent.parent.parent / "api" / "data" / "tasks.db"
 
 
 def get_pending_tasks(conn: sqlite3.Connection) -> list[dict]:
     """Return all tasks with status 'pending'."""
     conn.row_factory = sqlite3.Row
-    cur = conn.execute("SELECT * FROM tasks WHERE status = 'pending' ORDER BY created_at")
+    cur = conn.execute(
+        "SELECT * FROM tasks WHERE status = 'pending' ORDER BY created_at"
+    )
     return [dict(row) for row in cur.fetchall()]
 
 

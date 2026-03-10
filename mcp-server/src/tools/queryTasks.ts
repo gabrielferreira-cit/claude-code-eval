@@ -11,9 +11,7 @@ export interface QueryTasksInput {
 
 export function queryTasks(db: Database.Database, input: QueryTasksInput): object[] {
   const limit = Math.min(Math.max(1, input.limit ?? 20), 100);
-  const orderBy = (['created_at', 'updated_at', 'id'] as const).includes(
-    input.order_by as OrderBy
-  )
+  const orderBy = (['created_at', 'updated_at', 'id'] as const).includes(input.order_by as OrderBy)
     ? input.order_by
     : 'created_at';
 

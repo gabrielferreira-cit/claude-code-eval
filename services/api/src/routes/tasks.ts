@@ -13,18 +13,43 @@ tasksRouter.post('/', (req: Request, res: Response) => {
     return;
   }
 
+  if (body.priority !== undefined) {
+    const valid = ['low', 'medium', 'high'];
+    if (!valid.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+      return;
+    }
+  }
+
   const db = getDb();
   const stmt = db.prepare(
-    'INSERT INTO tasks (title, description) VALUES (?, ?) RETURNING *'
+    'INSERT INTO tasks (title, description, priority) VALUES (?, ?, ?) RETURNING *'
   );
-  const task = stmt.get(body.title.trim(), body.description ?? null) as Task;
+  const task = stmt.get(
+    body.title.trim(),
+    body.description ?? null,
+    body.priority ?? 'medium'
+  ) as Task;
   res.status(201).json({ data: task });
 });
 
 // GET /tasks — list all tasks
-tasksRouter.get('/', (_req: Request, res: Response) => {
+tasksRouter.get('/', (req: Request, res: Response) => {
+  const { priority } = req.query;
+  if (priority !== undefined) {
+    const valid = ['low', 'medium', 'high'];
+    if (!valid.includes(priority as string)) {
+      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+      return;
+    }
+  }
+
   const db = getDb();
-  const tasks = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all() as Task[];
+  const tasks = priority
+    ? (db
+        .prepare('SELECT * FROM tasks WHERE priority = ? ORDER BY created_at DESC')
+        .all(priority as string) as Task[])
+    : (db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all() as Task[]);
   res.json({ data: tasks });
 });
 
@@ -85,6 +110,15 @@ tasksRouter.patch('/:id', (req: Request, res: Response) => {
     }
     fields.push('status = ?');
     values.push(body.status);
+  }
+  if (body.priority !== undefined) {
+    const valid = ['low', 'medium', 'high'];
+    if (!valid.includes(body.priority)) {
+      res.status(400).json({ error: `priority must be one of: ${valid.join(', ')}` });
+      return;
+    }
+    fields.push('priority = ?');
+    values.push(body.priority);
   }
 
   if (fields.length === 0) {
