@@ -57,8 +57,7 @@ tasksRouter.patch('/:id', (req: Request, res: Response) => {
   const db = getDb();
   const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Task | undefined;
   if (!existing) {
-    // BUG: should be res.status(404) — this is the seeded bug for Workflow 1
-    res.status(200).json({ error: 'Task not found' });
+    res.status(404).json({ error: 'Task not found' });
     return;
   }
 

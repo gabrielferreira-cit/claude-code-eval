@@ -93,6 +93,12 @@ describe('PATCH /tasks/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.title).toBe('New title');
   });
+
+  it('returns 404 when task does not exist', async () => {
+    const res = await request(app).patch('/tasks/99999').send({ title: 'X' });
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBeDefined();
+  });
 });
 
 // ─── DELETE /tasks/:id ───────────────────────────────────────────────────────
